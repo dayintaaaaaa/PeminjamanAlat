@@ -51,13 +51,13 @@ class BorrowedController extends Controller
                     throw new \RuntimeException('processed');
                 }
 
-                $tool = Tool::lockForUpdate()->findOrFail($borrowing->id_tool);
+                $tool = Tool::lockForUpdate()->findOrFail($borrowing->id_tools);
 
-                if ($tool->available < $borrowing->qty) {
+                if ($tool->available < $borrowing->borrow_qty) {
                     throw new \RuntimeException('stock');
                 }
 
-                $tool->available -= $borrowing->qty;
+                $tool->available -= $borrowing->borrow_qty;
 
                 if ($tool->available === 0 && $tool->status !== 'Maintenance') {
                     $tool->status = 'Borrowed';
@@ -67,7 +67,7 @@ class BorrowedController extends Controller
 
                 $borrowing->update([
                     'status'       => 'Active',
-                    'processed_by' => Auth::id(),
+                    'id_officer' => Auth::id(),
                 ]);
             });
         } catch (\RuntimeException $e) {
@@ -89,7 +89,7 @@ class BorrowedController extends Controller
 
         $borrowing->update([
             'status'       => 'Rejected',
-            'processed_by' => Auth::id(),
+            'id_officer' => Auth::id(),
         ]);
 
         return back()->with('success', 'Successfully reject this data');

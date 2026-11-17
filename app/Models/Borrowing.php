@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Borrowing extends Model
 {
     protected $fillable = [
-        'borrow_code', 'id_user', 'id_tool', 'qty',
-        'borrow_date', 'due_date', 'status', 'notes', 'processed_by',
+        'borrow_code','id_user', 'id_officer', 'id_tools', 'borrow_qty', 
+        'borrow_date', 'due_date','status', 'notes', 
     ];
 
     protected $casts = [
@@ -23,12 +23,12 @@ class Borrowing extends Model
 
     public function tool()
     {
-        return $this->belongsTo(Tool::class, 'id_tool');
+        return $this->belongsTo(Tool::class, 'id_tools');
     }
 
     public function officer()
     {
-        return $this->belongsTo(User::class, 'processed_by');
+        return $this->belongsTo(User::class, 'id_officer');
     }
 
     public function returns()

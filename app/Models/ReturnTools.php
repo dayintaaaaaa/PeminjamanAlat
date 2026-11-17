@@ -8,10 +8,8 @@ class ReturnTools extends Model
 {
     protected $table = 'return_tools';
 
-    protected $fillable = [
-        'return_code', 'id_borrowing', 'return_date',
-        'return_condition', 'status', 'notes', 'processed_by',
-    ];
+    protected $fillable = [ 'return_code', 'id_borrowing', 
+    'id_officer', 'return_date', 'condition', 'status', 'notes', ];
 
     protected $casts = [
         'return_date' => 'date',
@@ -24,7 +22,7 @@ class ReturnTools extends Model
 
     public function officer()
     {
-        return $this->belongsTo(User::class, 'processed_by');
+        return $this->belongsTo(User::class, 'id_officer');
     }
 
     // jumlah hari terlambat: tanggal kembali dibanding jatuh tempo peminjaman

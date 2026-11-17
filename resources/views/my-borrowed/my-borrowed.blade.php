@@ -119,12 +119,12 @@
                                                             'created'     => $b->created_at?->format('d-m-Y'),
                                                             'tool'        => ($b->tool->tools_code ?? '-') . ' | ' . ($b->tool->tools_name ?? '-'),
                                                             'category'    => ($b->tool?->category?->category_code ?? '-') . ' | ' . ($b->tool?->category?->category_name ?? '-'),
-                                                            'qty'         => $b->qty,
+                                                            'qty'         => $b->borrow_qty,
                                                             'location'    => $b->tool?->storage_location ?: '-',
                                                             'photo'       => $b->tool?->photo ? asset('storage/' . $b->tool->photo) : null,
                                                             'borrowDate'  => $b->borrow_date?->format('d-m-Y'),
                                                             'dueDate'     => $b->due_date?->format('d-m-Y'),
-                                                            'processedBy' => $b->officer->name ?? '-',
+                                                            'processedBy' => $b->officer?->name ?? '-',
                                                             'note'        => $b->notes ?: '-',
                                                         ]);
                                                         $dispatch('open-modal', 'detail-borrowed')"

@@ -73,8 +73,8 @@ class MyBorrowedController extends Controller
         Borrowing::create([
             'borrow_code' => $this->nextCode(Borrowing::class, 'borrow_code', 'TRX'),
             'id_user'     => Auth::id(),
-            'id_tool'     => $tool->id,
-            'qty'         => $data['qty'],
+            'id_tools'     => $tool->id,
+            'borrow_qty'  => $data['qty'],
             'borrow_date' => today(),
             'due_date'    => today()->addDays(self::DUE_DAYS),
             'status'      => 'Pending',
