@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --c-primary: #0F766E; /*hijau tua: buat sidebar dan beberapa button*/
+    --c-primary-dark: #0B5F58; /* kartu user di sidebar*/
+    --c-active: #2B9485; /* menu aktif */
+    --c-accent: #3FB98A; /* hijau muda: buat search, filter dll*/
+}
