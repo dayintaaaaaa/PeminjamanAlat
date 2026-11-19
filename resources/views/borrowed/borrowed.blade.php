@@ -4,10 +4,12 @@
     @php
         // class ditulis utuh supaya dikenali Tailwind
         $statusColor = [
-            'Pending'  => 'text-orange-500',
-            'Active'   => 'text-green-600',
-            'Overdue'  => 'text-red-600',
-            'Rejected' => 'text-gray-500',
+            'Pending'         => 'text-orange-500',
+            'Active'          => 'text-green-600',
+            'Overdue'         => 'text-red-600',
+            'Pending Return'  => 'text-orange-500',
+            'Return Rejected' => 'text-red-600',
+            'Rejected'        => 'text-gray-500',
         ];
     @endphp
 
@@ -48,7 +50,7 @@
                         <select id="f_status" name="status"
                                 class="w-full rounded-md border-gray-300 text-sm focus:border-[var(--c-primary)] focus:ring-[var(--c-primary)]">
                             <option value="">All status</option>
-                            @foreach (['Pending', 'Active', 'Overdue', 'Rejected'] as $s)
+                            @foreach (['Pending', 'Active', 'Overdue', 'Pending Return', 'Return Rejected', 'Rejected'] as $s)
                                 <option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>
                             @endforeach
                         </select>

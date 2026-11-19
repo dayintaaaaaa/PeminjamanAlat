@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ToolCategory;
+use App\Models\ActivityLog;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
@@ -34,11 +35,13 @@ class ToolCategoryController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        ToolCategory::create([
+        $category = ToolCategory::create([
             'category_code' => $data['code'],
             'category_name' => $data['name'],
             'description'   => $data['description'] ?? null,
         ]);
+
+        ActivityLog::record('Create', 'Tools Category', "Created category {$category->category_name}");
 
         return redirect()->route('master.tools-category')
             ->with('success', 'Category successfully added.');
@@ -57,6 +60,8 @@ class ToolCategoryController extends Controller
             'description'   => $data['description'] ?? null,
         ]);
 
+        ActivityLog::record('Update', 'Tools Category', "Updated category {$category->category_name}");
+
         return redirect()->route('master.tools-category')
             ->with('success', 'Category successfully updated.');
     }
@@ -74,6 +79,8 @@ class ToolCategoryController extends Controller
             return redirect()->route('master.tools-category')
                 ->with('error', 'Failed to delete this data. Please try again.');
         }
+
+        ActivityLog::record('Delete', 'Tools Category', "Deleted category {$category->category_name}");
 
         return redirect()->route('master.tools-category')
             ->with('success', 'Successfully deleted this data');

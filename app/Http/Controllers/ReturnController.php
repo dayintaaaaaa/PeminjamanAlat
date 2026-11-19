@@ -39,30 +39,31 @@ class ReturnController extends Controller
                 $return = ReturnTools::lockForUpdate()->findOrFail($returnTool->id);
 
                 if ($return->status !== 'Pending') {
-                    throw new \RuntimeException('processed');
+                    throw new \DomainException('processed');
                 }
 
                 $borrowing = Borrowing::lockForUpdate()->findOrFail($return->id_borrowing);
-                $tool      = Tool::lockForUpdate()->findOrFail($borrowing->id_tool);
+                $tool      = Tool::lockForUpdate()->findOrFail($borrowing->id_tools);
+                $qty       = (int) $borrowing->borrow_qty;
 
-                switch ($return->return_condition) {
+                switch ($return->condition) {
                     case 'Lost':
                         // alat hilang: jumlah total berkurang, stok tersedia tidak bertambah
-                        $tool->tools_qty = max(0, $tool->tools_qty - $borrowing->qty);
+                        $tool->tools_qty = max(0, (int) $tool->tools_qty - $qty);
                         break;
 
                     case 'Damaged':
                         // alat rusak tetap masuk hitungan, tapi kondisinya ditandai
-                        $tool->available += $borrowing->qty;
+                        $tool->available       = (int) $tool->available + $qty;
                         $tool->tools_condition = 'Damaged';
                         break;
 
                     default: // Good
-                        $tool->available += $borrowing->qty;
+                        $tool->available = (int) $tool->available + $qty;
                 }
 
                 // jaga supaya tidak melebihi total
-                $tool->available = min($tool->available, $tool->tools_qty);
+                $tool->available = min((int) $tool->available, (int) $tool->tools_qty);
 
                 if ($tool->status !== 'Maintenance') {
                     $tool->status = $tool->available > 0 ? 'Available' : 'Borrowed';
@@ -70,14 +71,14 @@ class ReturnController extends Controller
 
                 $tool->save();
 
-                $borrowing->update(['status' => 'Returned']);
+                $borrowing->update(['status' => 'Completed']);
 
                 $return->update([
-                    'status'       => 'Approved',
-                    'processed_by' => Auth::id(),
+                    'status'     => 'Approved',
+                    'id_officer' => Auth::id(),
                 ]);
             });
-        } catch (\RuntimeException $e) {
+        } catch (\DomainException $e) {
             return back()->with('error', 'Failed to approve. This return has already been processed.');
         }
 
@@ -92,8 +93,8 @@ class ReturnController extends Controller
 
         // peminjaman tetap Active, jadi peminjam bisa mengajukan pengembalian lagi
         $returnTool->update([
-            'status'       => 'Rejected',
-            'processed_by' => Auth::id(),
+            'status'     => 'Rejected',
+            'id_officer' => Auth::id(),
         ]);
 
         return back()->with('success', 'Successfully reject this data');

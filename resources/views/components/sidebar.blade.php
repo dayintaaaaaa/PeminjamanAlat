@@ -2,26 +2,26 @@
 $role = auth()->user()->getRoleNames()->first();
 
 $menus = match ($role) {
-'admin' => [
-['icon' => 'bi-bar-chart-fill', 'label' => 'Dashboard', 'url' => '/dashboard', 'match' => 'dashboard'],
-['icon' => 'bi-person-fill', 'label' => 'User Management', 'url' => '/users', 'match' => 'users*'],
-['icon' => 'bi-archive-fill', 'label' => 'Master Data', 'children' => [
-['label' => 'Tools Category', 'url' => '/tool-categories', 'match' => 'tool-categories*'],
-['label' => 'Tools Data', 'url' => '/tools-data', 'match' => 'tools*'],
-]],
-['icon' => 'bi-arrow-left-right', 'label' => 'Transaction', 'url' => '/transactions', 'match' => 'transactions*'],
-['icon' => 'bi-clock-history', 'label' => 'Activity Log', 'url' => '/activity-logs', 'match' => 'activity-logs'],
-],
-'petugas' => [
-['icon' => 'bi-archive-fill', 'label' => 'Tools Data', 'url' => '/tools-data', 'match' => 'tools*'],
-['icon' => 'bi-box-arrow-in-down', 'label' => 'Borrowed', 'url' => '/borrowed', 'match' => 'borrowed*'],
-['icon' => 'bi-box-arrow-up-left', 'label' => 'Return', 'url' => '/return', 'match' => 'return*'],
-],
-'peminjam' => [
-['icon' => 'bi-archive-fill', 'label' => 'Tools Data', 'url' => '/tools-data', 'match' => 'tools*'],
-['icon' => 'bi-arrow-left-right', 'label' => 'My Borrowed', 'url' => '/my-borrowed', 'match' => 'my-borrowed*'],
-],
-default => [],
+    'admin' => [
+        ['icon' => 'bi-bar-chart-fill', 'label' => 'Dashboard', 'url' => '/dashboard', 'match' => 'dashboard'],
+        ['icon' => 'bi-person-fill', 'label' => 'User Management', 'url' => '/users', 'match' => 'users*'],
+        ['icon' => 'bi-archive-fill', 'label' => 'Master Data', 'children' => [
+        ['label' => 'Tools Category', 'url' => '/tool-categories', 'match' => 'tool-categories*'],
+        ['label' => 'Tools Data', 'url' => '/tools-data', 'match' => 'tools*'],
+    ]],
+        ['icon' => 'bi-arrow-left-right', 'label' => 'Transaction', 'url' => '/transactions', 'match' => 'transactions*'],
+        ['icon' => 'bi-clock-history', 'label' => 'Activity Log', 'url' => '/activity-logs', 'match' => 'activity-logs'],
+    ],
+    'petugas' => [
+        ['icon' => 'bi-archive-fill', 'label' => 'Tools Data', 'url' => '/tools-data', 'match' => 'tools*'],
+        ['icon' => 'bi-box-arrow-in-down', 'label' => 'Borrowed', 'url' => '/borrowed', 'match' => 'borrowed*'],
+        ['icon' => 'bi-box-arrow-up-left', 'label' => 'Return', 'url' => '/return', 'match' => 'return*'],
+    ],
+    'peminjam' => [
+        ['icon' => 'bi-archive-fill', 'label' => 'Tools Data', 'url' => '/tools-data', 'match' => 'tools*'],
+        ['icon' => 'bi-arrow-left-right', 'label' => 'My Borrowed', 'url' => '/my-borrowed', 'match' => 'my-borrowed*'],
+    ],
+    default => [],  
 };
 @endphp
 

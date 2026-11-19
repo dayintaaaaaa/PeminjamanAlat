@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Borrowing;
 use App\Models\ReturnTools;
 use App\Models\Tool;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class MyBorrowedController extends Controller
 {
@@ -17,7 +19,7 @@ class MyBorrowedController extends Controller
     {
         $perPage = in_array((int) $request->per_page, [5, 10, 25]) ? (int) $request->per_page : 5;
 
-        $borrowings = Borrowing::with(['tool.category', 'officer', 'pendingReturn'])
+        $borrowings = Borrowing::with(['tool.category', 'officer', 'pendingReturn', 'latestReturn'])
             ->where('id_user', Auth::id())   // hanya milik user yang login
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -26,11 +28,17 @@ class MyBorrowedController extends Controller
                 });
             })
             ->when($request->status, function ($query, $status) {
+                $rejected = fn ($r) => $r->where('status', 'Rejected');
+
                 return match ($status) {
-                    'Overdue'        => $query->where('status', 'Active')->whereDate('due_date', '<', today())->whereDoesntHave('pendingReturn'),
-                    'Active'         => $query->where('status', 'Active')->whereDate('due_date', '>=', today())->whereDoesntHave('pendingReturn'),
-                    'Pending Return' => $query->where('status', 'Active')->whereHas('pendingReturn'),
-                    default          => $query->where('status', $status),
+                    'Overdue'         => $query->where('status', 'Active')->whereDate('due_date', '<', today())
+                                            ->whereDoesntHave('pendingReturn')->whereDoesntHave('returns', $rejected),
+                    'Active'          => $query->where('status', 'Active')->whereDate('due_date', '>=', today())
+                                            ->whereDoesntHave('pendingReturn')->whereDoesntHave('returns', $rejected),
+                    'Pending Return'  => $query->where('status', 'Active')->whereHas('pendingReturn'),
+                    'Return Rejected' => $query->where('status', 'Active')->whereDoesntHave('pendingReturn')
+                                            ->whereHas('returns', $rejected),
+                    default           => $query->where('status', $status),
                 };
             })
             ->orderByDesc('id')
@@ -70,16 +78,18 @@ class MyBorrowedController extends Controller
             ], 'addRequest');
         }
 
-        Borrowing::create([
+        $borrowing = Borrowing::create([
             'borrow_code' => $this->nextCode(Borrowing::class, 'borrow_code', 'TRX'),
             'id_user'     => Auth::id(),
-            'id_tools'     => $tool->id,
+            'id_tools'    => $tool->id,
             'borrow_qty'  => $data['qty'],
             'borrow_date' => today(),
             'due_date'    => today()->addDays(self::DUE_DAYS),
             'status'      => 'Pending',
             'notes'       => $data['notes'] ?? null,
         ]);
+
+        ActivityLog::record('Create', 'Transaction - Borrow', "Requested borrowing {$borrowing->borrow_code} ({$tool->tools_name} x{$data['qty']})");
 
         return redirect()->route('my-borrowed.my-borrowed')
             ->with('success', 'Borrowing request submitted. Waiting for staff approval.');
@@ -90,21 +100,34 @@ class MyBorrowedController extends Controller
     {
         abort_unless((int) $borrowing->id_user === (int) Auth::id(), 403);
 
-        if ($borrowing->status !== 'Active') {
-            return back()->with('error', 'Only active borrowings can be returned.');
+        $error = DB::transaction(function () use ($borrowing) {
+            // kunci baris peminjaman supaya klik ganda tidak membuat dua pengajuan
+            $b = Borrowing::lockForUpdate()->findOrFail($borrowing->id);
+
+            if ($b->status !== 'Active') {
+                return 'Only active borrowings can be returned.';
+            }
+
+            if ($b->pendingReturn()->exists()) {
+                return 'A return request for this borrowing is already waiting for staff verification.';
+            }
+
+            ReturnTools::create([
+                'return_code'  => $this->nextCode(ReturnTools::class, 'return_code', 'RET'),
+                'id_borrowing' => $b->id,
+                'return_date'  => today(),
+                'condition'    => 'Good',
+                'status'       => 'Pending',
+            ]);
+
+            return null;
+        });
+
+        if ($error) {
+            return back()->with('error', $error);
         }
 
-        if ($borrowing->pendingReturn()->exists()) {
-            return back()->with('error', 'A return request for this borrowing is already waiting for staff verification.');
-        }
-
-        ReturnTools::create([
-            'return_code'      => $this->nextCode(ReturnTools::class, 'return_code', 'RET'),
-            'id_borrowing'     => $borrowing->id,
-            'return_date'      => today(),
-            'return_condition' => 'Good',
-            'status'           => 'Pending',
-        ]);
+        ActivityLog::record('Create', 'Transaction - Return', "Requested return for {$borrowing->borrow_code}");
 
         return back()->with('success', 'Return request submitted. Waiting for staff verification.');
     }

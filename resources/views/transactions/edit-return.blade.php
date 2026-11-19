@@ -1,5 +1,5 @@
 <x-modal name="edit-return" maxWidth="2xl">
-    <form method="POST" action="#">
+    <form method="POST" :action="editReturnAction">
         @csrf
         @method('PUT')
 
@@ -9,86 +9,76 @@
 
         <div class="grid grid-cols-2 gap-x-6 px-6 py-5 text-sm">
 
-            {{-- ===== KOLOM KIRI ===== --}}
+            {{-- kiri --}}
             <div class="space-y-3">
                 <div>
-                    <label for="edit_ret_borrower" class="block font-medium text-gray-900 mb-1">Borrower</label>
-                    <input type="text" id="edit_ret_borrower" value="David Adrison S" readonly
+                    <label class="block font-medium text-gray-900 mb-1">Borrower</label>
+                    <input type="text" x-model="editReturn.borrower" readonly
                            class="w-full cursor-not-allowed rounded-lg border-2 border-[var(--c-accent)] bg-gray-100 px-3 py-2 text-sm text-gray-500 focus:border-[var(--c-accent)] focus:ring-0">
                 </div>
-
                 <div>
-                    <label for="edit_ret_tool" class="block font-medium text-gray-900 mb-1">Tool Name</label>
-                    <input type="text" id="edit_ret_tool" value="Digital Multimeter" readonly
+                    <label class="block font-medium text-gray-900 mb-1">Tool Name</label>
+                    <input type="text" x-model="editReturn.tool" readonly
                            class="w-full cursor-not-allowed rounded-lg border-2 border-[var(--c-accent)] bg-gray-100 px-3 py-2 text-sm text-gray-500 focus:border-[var(--c-accent)] focus:ring-0">
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label for="edit_ret_borrow_date" class="mb-1 flex items-center gap-1 font-medium text-gray-900">
-                            Borrowing Date <i class="bi bi-calendar3 text-xs"></i>
-                        </label>
-                        <input type="text" id="edit_ret_borrow_date" value="28/09/2026" readonly
+                        <label class="mb-1 flex items-center gap-1 font-medium text-gray-900">Borrowing Date <i class="bi bi-calendar3 text-xs"></i></label>
+                        <input type="text" x-model="editReturn.borrowDate" readonly
                                class="w-full cursor-not-allowed rounded-lg border-2 border-[var(--c-accent)] bg-gray-100 px-3 py-2 text-sm text-gray-500 focus:border-[var(--c-accent)] focus:ring-0">
                     </div>
                     <div>
-                        <label for="edit_ret_due" class="mb-1 flex items-center gap-1 font-medium text-gray-900">
-                            Due Date <i class="bi bi-calendar3 text-xs"></i>
-                        </label>
-                        <input type="text" id="edit_ret_due" value="03/10/2026" readonly
+                        <label class="mb-1 flex items-center gap-1 font-medium text-gray-900">Due Date <i class="bi bi-calendar3 text-xs"></i></label>
+                        <input type="text" x-model="editReturn.dueDate" readonly
                                class="w-full cursor-not-allowed rounded-lg border-2 border-[var(--c-accent)] bg-gray-100 px-3 py-2 text-sm text-gray-500 focus:border-[var(--c-accent)] focus:ring-0">
                     </div>
                 </div>
             </div>
 
-            {{-- ===== KOLOM KANAN ===== --}}
+            {{-- kanan --}}
             <div class="space-y-3">
                 <div class="grid grid-cols-5 gap-3">
                     <div class="col-span-3">
-                        <label for="edit_ret_date" class="block font-medium text-gray-900 mb-1">Return Date</label>
-                        <input type="date" id="edit_ret_date" name="return_date" value="2026-10-03" required
+                        <label for="edit_r_date" class="block font-medium text-gray-900 mb-1">Return Date</label>
+                        <input type="date" id="edit_r_date" name="return_date" x-model="editReturn.returnDate" required
                                class="w-full rounded-lg border-2 border-[var(--c-accent)] bg-white px-3 py-2 text-sm text-gray-900 focus:border-[var(--c-primary)] focus:ring-0">
                     </div>
                     <div class="col-span-2">
-                        <label for="edit_ret_code" class="block font-medium text-gray-900 mb-1">Return Code</label>
-                        <input type="text" id="edit_ret_code" name="code" value="RET-02" readonly
+                        <label class="block font-medium text-gray-900 mb-1">Return Code</label>
+                        <input type="text" x-model="editReturn.code" readonly
                                class="w-full cursor-not-allowed rounded-lg border-2 border-[var(--c-accent)] bg-gray-100 px-3 py-2 text-sm text-gray-500 focus:border-[var(--c-accent)] focus:ring-0">
                     </div>
                 </div>
 
                 <div>
-                    <label for="edit_ret_condition" class="block font-medium text-gray-900 mb-1">Condition</label>
-                    <select id="edit_ret_condition" name="condition" required
+                    <label for="edit_r_condition" class="block font-medium text-gray-900 mb-1">Condition</label>
+                    <select id="edit_r_condition" name="condition" x-model="editReturn.condition" required
                             class="w-full rounded-lg border-2 border-[var(--c-accent)] bg-white px-3 py-2 text-sm text-gray-900 focus:border-[var(--c-primary)] focus:ring-0">
-                        <option selected>Good</option>
-                        <option>Damaged</option>
-                        <option>Lost</option>
+                        @foreach (['Good', 'Damaged', 'Lost'] as $c)
+                            <option value="{{ $c }}">{{ $c }}</option>
+                        @endforeach
                     </select>
                 </div>
 
                 <div>
-                    <label for="edit_ret_status" class="block font-medium text-gray-900 mb-1">Status</label>
-                    <input type="text" id="edit_ret_status" value="On Time (0 Days)" readonly
+                    <label class="block font-medium text-gray-900 mb-1">Status</label>
+                    <input type="text" :value="editReturnStatus" readonly
                            class="w-full cursor-default rounded-lg border-2 border-[var(--c-accent)] bg-white px-3 py-2 text-sm text-gray-900 focus:border-[var(--c-accent)] focus:ring-0">
                 </div>
 
                 <div>
-                    <label for="edit_ret_notes" class="block font-medium text-gray-900 mb-1">Notes</label>
-                    <textarea id="edit_ret_notes" name="notes" rows="3" placeholder="Enter notes (optional).."
-                              class="w-full rounded-lg border-2 border-[var(--c-accent)] bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:border-[var(--c-primary)] focus:ring-0">-</textarea>
+                    <label for="edit_r_notes" class="block font-medium text-gray-900 mb-1">Notes</label>
+                    <textarea id="edit_r_notes" name="notes" x-model="editReturn.notes" rows="3" placeholder="Enter notes (optional).."
+                              class="w-full rounded-lg border-2 border-[var(--c-accent)] bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:border-[var(--c-primary)] focus:ring-0"></textarea>
                 </div>
             </div>
         </div>
 
         <div class="flex items-center justify-between px-6 pb-5">
             <button type="button" x-on:click="$dispatch('close-modal', 'edit-return')"
-                    class="rounded-md bg-gray-300 px-5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-400">
-                Cancel
-            </button>
+                    class="rounded-md bg-gray-300 px-5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-400">Cancel</button>
             <button type="submit"
-                    class="rounded-md bg-[var(--c-primary)] px-6 py-2 text-xs font-semibold text-white hover:opacity-90">
-                Save
-            </button>
+                    class="rounded-md bg-[var(--c-primary)] px-6 py-2 text-xs font-semibold text-white hover:opacity-90">Save</button>
         </div>
     </form>
 </x-modal>

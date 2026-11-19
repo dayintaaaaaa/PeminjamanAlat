@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Borrowing;
 use App\Models\Tool;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,8 +15,8 @@ class BorrowedController extends Controller
     {
         $perPage = in_array((int) $request->per_page, [5, 10, 25]) ? (int) $request->per_page : 5;
 
-        $borrowings = Borrowing::with(['borrower', 'tool.category', 'officer'])
-            ->where('status', '!=', 'Returned')   // yang sudah kembali ada di halaman Return
+        $borrowings = Borrowing::with(['borrower', 'tool.category', 'officer', 'pendingReturn', 'latestReturn'])
+            ->where('status', '!=', 'Completed')   // yang sudah kembali ada di halaman Return
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('borrow_code', 'like', "%{$search}%")
@@ -24,13 +25,18 @@ class BorrowedController extends Controller
                 });
             })
             ->when($request->status, function ($query, $status) {
-                if ($status === 'Overdue') {
-                    return $query->where('status', 'Active')->whereDate('due_date', '<', today());
-                }
-                if ($status === 'Active') {
-                    return $query->where('status', 'Active')->whereDate('due_date', '>=', today());
-                }
-                return $query->where('status', $status);
+                $rejected = fn ($r) => $r->where('status', 'Rejected');
+
+                return match ($status) {
+                    'Overdue'         => $query->where('status', 'Active')->whereDate('due_date', '<', today())
+                                               ->whereDoesntHave('pendingReturn')->whereDoesntHave('returns', $rejected),
+                    'Active'          => $query->where('status', 'Active')->whereDate('due_date', '>=', today())
+                                               ->whereDoesntHave('pendingReturn')->whereDoesntHave('returns', $rejected),
+                    'Pending Return'  => $query->where('status', 'Active')->whereHas('pendingReturn'),
+                    'Return Rejected' => $query->where('status', 'Active')->whereDoesntHave('pendingReturn')
+                                               ->whereHas('returns', $rejected),
+                    default           => $query->where('status', $status),
+                };
             })
             ->orderByRaw("status = 'Pending' desc")   // yang menunggu persetujuan paling atas
             ->orderByDesc('id')
@@ -59,14 +65,14 @@ class BorrowedController extends Controller
 
                 $tool->available -= $borrowing->borrow_qty;
 
-                if ($tool->available === 0 && $tool->status !== 'Maintenance') {
+                if ($tool->available <= 0 && $tool->status !== 'Maintenance') {
                     $tool->status = 'Borrowed';
                 }
 
                 $tool->save();
 
                 $borrowing->update([
-                    'status'       => 'Active',
+                    'status'     => 'Active',
                     'id_officer' => Auth::id(),
                 ]);
             });
@@ -78,6 +84,8 @@ class BorrowedController extends Controller
             return back()->with('error', $message);
         }
 
+        ActivityLog::record('Approve', 'Transaction - Borrowing', "Approved borrowing {$borrowing->borrow_code}");
+
         return back()->with('success', 'Successfully approve this data');
     }
 
@@ -88,9 +96,11 @@ class BorrowedController extends Controller
         }
 
         $borrowing->update([
-            'status'       => 'Rejected',
+            'status'     => 'Rejected',
             'id_officer' => Auth::id(),
         ]);
+
+        ActivityLog::record('Reject', 'Transaction - Borrowing', "Rejected borrowing {$borrowing->borrow_code}");
 
         return back()->with('success', 'Successfully reject this data');
     }

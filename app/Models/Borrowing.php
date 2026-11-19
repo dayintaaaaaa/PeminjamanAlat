@@ -42,7 +42,18 @@ class Borrowing extends Model
         return $this->hasOne(ReturnTools::class, 'id_borrowing')->where('status', 'Pending');
     }
 
-    // Pending Return dan Overdue dihitung, bukan disimpan
+    // alias supaya view dan controller yang membaca $borrowing->qty tetap jalan
+    public function getQtyAttribute(): int
+    {
+        return (int) $this->borrow_qty;
+    }
+
+    // pengajuan return terbaru, apa pun statusnya
+    public function latestReturn()
+    {
+        return $this->hasOne(ReturnTools::class, 'id_borrowing')->latestOfMany();
+    }
+
     public function getDisplayStatusAttribute(): string
     {
         if ($this->status !== 'Active') {
@@ -53,10 +64,45 @@ class Borrowing extends Model
             return 'Pending Return';
         }
 
+        if ($this->latestReturn?->status === 'Rejected') {
+            return 'Return Rejected';
+        }
+
         if ($this->due_date && $this->due_date->lt(today())) {
             return 'Overdue';
         }
 
         return 'Active';
+    }
+
+    public function statusClass(): string
+    {
+        return match ($this->display_status) {
+            'Pending', 'Pending Return'  => 'text-orange-500',
+            'Active'                     => 'text-green-600',
+            'Overdue', 'Return Rejected' => 'text-red-600',
+            default                      => 'text-gray-500',
+        };
+    }
+
+    // data untuk modal detail
+    public function detailData(): array
+    {
+        return [
+            'borrower'    => $this->borrower?->name ?? '-',
+            'status'      => $this->display_status,
+            'statusClass' => $this->statusClass(),
+            'code'        => $this->borrow_code,
+            'created'     => $this->created_at?->format('d-m-Y'),
+            'tool'        => ($this->tool?->tools_code ?? '-') . ' | ' . ($this->tool?->tools_name ?? '-'),
+            'category'    => ($this->tool?->category?->category_code ?? '-') . ' | ' . ($this->tool?->category?->category_name ?? '-'),
+            'qty'         => (int) $this->borrow_qty,
+            'location'    => $this->tool?->storage_location ?: '-',
+            'photo'       => $this->tool?->photo ? asset('storage/' . $this->tool->photo) : null,
+            'borrowDate'  => $this->borrow_date?->format('d-m-Y'),
+            'dueDate'     => $this->due_date?->format('d-m-Y'),
+            'processedBy' => $this->officer?->name ?? '-',
+            'note'        => $this->notes ?: '-',
+        ];
     }
 }

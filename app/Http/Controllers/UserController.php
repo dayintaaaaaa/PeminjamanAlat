@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -54,6 +55,7 @@ class UserController extends Controller
         ]);
 
         $user->assignRole($data['role']);
+        ActivityLog::record('Create', 'User Management', "Created user {$user->name} ({$data['role']})");
 
         return redirect()->route('users.management-user')
             ->with('success', 'User successfully added.');
@@ -87,6 +89,7 @@ class UserController extends Controller
 
         $user->save();
         $user->syncRoles([$data['role']]);
+        ActivityLog::record('Update', 'User Management', "Updated user {$user->name}");
 
         return redirect()->route('users.management-user')
             ->with('success', 'User successfully updated.');
@@ -107,6 +110,8 @@ class UserController extends Controller
             return redirect()->route('users.management-user')
                 ->with('error', 'Failed to delete this data. It is still used by other records.');
         }
+
+        ActivityLog::record('Delete', 'User Management', "Deleted user {$user->name}");
 
         return redirect()->route('users.management-user')
             ->with('success', 'Successfully deleted this data');

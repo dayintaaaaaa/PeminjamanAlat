@@ -1,32 +1,12 @@
 <x-app-layout>
     <x-slot name="header">Return</x-slot>
 
-    @php
-        // class ditulis utuh supaya dikenali Tailwind
-        $conditionColor = [
-            'Good'    => 'text-green-600',
-            'Damaged' => 'text-orange-500',
-            'Lost'    => 'text-gray-900',
-        ];
-
-        $statusClass = fn ($r) => match (true) {
-            $r->status === 'Pending'  => 'text-orange-500',
-            $r->status === 'Rejected' => 'text-gray-500',
-            $r->late_days > 0         => 'text-red-600',
-            default                   => 'text-green-600',
-        };
-    @endphp
-
     <div class="mb-8">
         <h1 class="text-2xl font-bold">Return</h1>
         <p class="text-sm text-gray-500 mt-1">Manage and review equipment return approvals.</p>
     </div>
 
-    <div x-data="{
-            approveAction: '',
-            rejectAction: '',
-            detail: { borrower: '', status: '', statusClass: '', condition: '', conditionClass: '', code: '', returnAt: '', tool: '', category: '', qty: 0, location: '', photo: null, borrowCode: '', borrowDate: '', returnDate: '', dueDate: '', processedBy: '', note: '' }
-         }">
+    <div x-data="{ approveAction: '', rejectAction: '' }">
 
         <x-card>
             {{-- search --}}
@@ -51,20 +31,15 @@
                 </thead>
                 <tbody>
                     @forelse ($returns as $r)
-                        @php
-                            $b      = $r->borrowing;
-                            $st     = $r->display_status;
-                            $stCls  = $statusClass($r);
-                            $cdCls  = $conditionColor[$r->return_condition] ?? 'text-gray-900';
-                        @endphp
+                        @php $b = $r->borrowing; @endphp
                         <tr class="border-b border-gray-200 last:border-0">
                             <td class="py-3 text-center">{{ $returns->firstItem() + $loop->index }}</td>
                             <td class="py-3 text-center">{{ $r->return_code }}</td>
                             <td class="py-3 text-center">{{ $b?->borrower?->name ?? '-' }}</td>
                             <td class="py-3 text-center">{{ $b?->tool?->tools_name ?? '-' }}</td>
                             <td class="py-3 text-center">{{ $r->return_date?->format('j/n/y') }}</td>
-                            <td class="py-3 text-center font-semibold {{ $cdCls }}">{{ $r->return_condition }}</td>
-                            <td class="py-3 text-center font-semibold {{ $stCls }}">{{ $st }}</td>
+                            <td class="py-3 text-center font-semibold {{ $r->conditionClass() }}">{{ $r->condition }}</td>
+                            <td class="py-3 text-center font-semibold {{ $r->statusClass() }}">{{ $r->display_status }}</td>
                             <td class="py-3 text-center">
                                 <div class="relative inline-block" x-data="{ open: false }" @click.outside="open = false">
                                     <button type="button" @click="open = !open" class="px-2 text-gray-500 hover:text-gray-900">
@@ -90,29 +65,9 @@
                                             </button>
                                         @endif
 
+                                        {{-- Detail: datanya disiapkan model, modalnya komponen terpisah --}}
                                         <button type="button"
-                                                @click="open = false;
-                                                        detail = @js([
-                                                            'borrower'       => $b?->borrower?->name ?? '-',
-                                                            'status'         => $st,
-                                                            'statusClass'    => $stCls,
-                                                            'condition'      => $r->return_condition,
-                                                            'conditionClass' => $cdCls,
-                                                            'code'           => $r->return_code,
-                                                            'returnAt'       => $r->created_at?->format('d-m-Y'),
-                                                            'tool'           => ($b?->tool?->tools_code ?? '-') . ' | ' . ($b?->tool?->tools_name ?? '-'),
-                                                            'category'       => ($b?->tool?->category?->category_code ?? '-') . ' | ' . ($b?->tool?->category?->category_name ?? '-'),
-                                                            'qty'            => $b?->qty ?? 0,
-                                                            'location'       => $b?->tool?->storage_location ?: '-',
-                                                            'photo'          => $b?->tool?->photo ? asset('storage/' . $b->tool->photo) : null,
-                                                            'borrowCode'     => $b?->borrow_code ?? '-',
-                                                            'borrowDate'     => $b?->borrow_date?->format('d-m-Y'),
-                                                            'returnDate'     => $r->return_date?->format('d-m-Y'),
-                                                            'dueDate'        => $b?->due_date?->format('d-m-Y'),
-                                                            'processedBy'    => $r->officer->name ?? '-',
-                                                            'note'           => $r->notes ?: '-',
-                                                        ]);
-                                                        $dispatch('open-modal', 'detail-return')"
+                                                @click="open = false; $dispatch('show-return-detail', @js($r->detailData()))"
                                                 class="block w-full text-left px-4 py-2 hover:bg-gray-50">
                                             <i class="bi bi-info-circle mr-2 text-[var(--c-primary)]"></i>Detail
                                         </button>
@@ -178,4 +133,7 @@
             </button>
         </x-alert-modal>
     </div>
+
+    {{-- modal detail: dipakai bersama halaman admin --}}
+    @include('transactions.detail-return')
 </x-app-layout>

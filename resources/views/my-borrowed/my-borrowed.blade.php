@@ -4,12 +4,13 @@
     @php
         // class ditulis utuh supaya dikenali Tailwind
         $statusColor = [
-            'Pending'        => 'text-orange-500',
-            'Active'         => 'text-green-600',
-            'Overdue'        => 'text-red-600',
-            'Pending Return' => 'text-orange-500',
-            'Rejected'       => 'text-gray-500',
-            'Returned'       => 'text-gray-500',
+            'Pending'         => 'text-orange-500',
+            'Active'          => 'text-green-600',
+            'Overdue'         => 'text-red-600',
+            'Pending Return'  => 'text-orange-500',
+            'Return Rejected' => 'text-red-600',
+            'Rejected'        => 'text-gray-500',
+            'Completed'       => 'text-gray-500',
         ];
     @endphp
 
@@ -51,7 +52,8 @@
                         <select id="f_status" name="status"
                                 class="w-full rounded-md border-gray-300 text-sm focus:border-[var(--c-primary)] focus:ring-[var(--c-primary)]">
                             <option value="">All status</option>
-                            @foreach (['Pending', 'Active', 'Overdue', 'Pending Return', 'Rejected', 'Returned'] as $s)
+                            {{-- ← BARU: 'Return Rejected' ditambahkan --}}
+                            @foreach (['Pending', 'Active', 'Overdue', 'Pending Return', 'Return Rejected', 'Rejected', 'Completed'] as $s)
                                 <option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>
                             @endforeach
                         </select>
@@ -98,8 +100,8 @@
                                     <div x-show="open" x-cloak x-transition
                                          class="absolute right-0 z-20 mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-100 text-left text-sm py-1">
 
-                                        {{-- Return hanya untuk yang Active atau Overdue dan belum diajukan --}}
-                                        @if ($st === 'Active' || $st === 'Overdue')
+                                        {{-- ← BARU: Return juga muncul untuk 'Return Rejected', supaya bisa diajukan ulang --}}
+                                        @if (in_array($st, ['Active', 'Overdue', 'Return Rejected']))
                                             <button type="button"
                                                     @click="open = false;
                                                             returnAction = '{{ route('my-borrowed.return', $b) }}';
