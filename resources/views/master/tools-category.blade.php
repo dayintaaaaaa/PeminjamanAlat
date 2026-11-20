@@ -78,7 +78,7 @@
                                         {{-- Detail --}}
                                         <button type="button"
                                                 @click="open = false;
-                                                        detail = @js(['code' => $c->category_code, 'name' => $c->category_name, 'total' => (int) ($c->tools_sum_qty ?? 0), 'description' => $c->description ?: '-']);
+                                                        detail = @js(['code' => $c->category_code, 'name' => $c->category_name, 'total' => (int) ($c->tools_sum_tools_qty ?? 0), 'description' => $c->description ?: '-']);
                                                         $dispatch('open-modal', 'detail-category')"
                                                 class="block w-full text-left px-4 py-2 hover:bg-gray-50">
                                             <i class="bi bi-info-circle mr-2"></i>Detail
